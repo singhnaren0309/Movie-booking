@@ -1,0 +1,43 @@
+const USER_STATUS={
+    PENDING:'PENDING',
+    APPROVED:'APPROVED',
+    REJECTED:'REJECTED'
+}
+const USER_ROLE={
+    ADMIN:'ADMIN',
+    CLIENT:'CLIENT',
+    CUSTOMER:'CUSTOMER'
+}
+
+const STATUS_CODES={
+    SUCCESS:200,
+    CREATED:201,
+    ACCEPTED:202,
+    NOT_FOUND:404,
+    BAD_REQUEST:400,
+    UNAUTHORIZED:401,
+    FORBIDDEN:403,
+    INTERNAL_SERVER_ERROR:500,
+    UNPROCESSABLE_ENTITY:422
+}
+
+const BOOKING_STATUS={
+    cancelled:'CANCELLED',
+    successfull:'SUCCESSFULL',
+    processing:'PROCESSING'
+}
+
+const PAYMENT_STATUS={
+    success:"SUCCESS",
+    pending:"PENDING",
+    failed:"FAILED",
+    expired:"EXPIRED"
+}
+
+module.exports={
+    USER_STATUS,
+    USER_ROLE,
+    STATUS_CODES,
+    BOOKING_STATUS,
+    PAYMENT_STATUS
+} 

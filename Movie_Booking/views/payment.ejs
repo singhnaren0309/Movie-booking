@@ -1,0 +1,123 @@
+<%- include('partials/header') %>
+
+<div class="auth-wrapper" style="max-width: 540px;">
+    <div class="auth-card" id="checkout-card">
+        <h2>💳 Complete Payment</h2>
+        <p class="auth-subtitle">Finalize your movie ticket reservation</p>
+
+        <div style="background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Movie</span>
+                <strong style="color: #fff;"><%= booking.movieId ? booking.movieId.name : 'Movie Ticket' %></strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Theatre</span>
+                <span><%= booking.theatreId ? booking.theatreId.name : 'Cinema' %></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Show Timing</span>
+                <span><%= booking.timing %></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Total Tickets</span>
+                <span><%= booking.noOfSeats %> Seat(s)</span>
+            </div>
+            <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <strong style="font-size: 1.1rem;">Amount Due</strong>
+                <strong style="font-size: 1.4rem; color: var(--accent-gold);">₹<%= booking.totalCost %></strong>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; font-size: 0.85rem; color: #10b981; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🛡️</span> Secure instant payment processing with automated email confirmation.
+        </div>
+
+        <button id="pay-btn" class="btn btn-primary btn-block">
+            Pay ₹<%= booking.totalCost %> Now
+        </button>
+    </div>
+
+    <!-- Success Receipt Card (hidden initially) -->
+    <div class="auth-card" id="success-card" style="display: none; text-align: center;">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🎉</div>
+        <h2 style="color: #10b981;">Payment Successful!</h2>
+        <p class="auth-subtitle" style="margin-bottom: 1.5rem;">Your tickets have been confirmed.</p>
+
+        <div id="receipt-details" style="background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem;">
+            <!-- Populated by JS -->
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <a href="/my-bookings" class="btn btn-primary btn-block">View My Tickets</a>
+            <a href="/" class="btn btn-secondary btn-block">Back Home</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const bookingId = "<%= booking._id %>";
+    const amount = <%= booking.totalCost %>;
+    const payBtn = document.getElementById("pay-btn");
+    const checkoutCard = document.getElementById("checkout-card");
+    const successCard = document.getElementById("success-card");
+    const receiptDetails = document.getElementById("receipt-details");
+
+    payBtn.addEventListener("click", async () => {
+        const token = Auth.getToken();
+        if (!token) {
+            showToast("Please sign in to complete payment", "error");
+            setTimeout(() => {
+                window.location.href = `/signin?redirect=/payment/${bookingId}`;
+            }, 1000);
+            return;
+        }
+
+        payBtn.disabled = true;
+        payBtn.textContent = "Processing payment...";
+
+        try {
+            const res = await fetch("/mba/api/v1/payments", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-access-token": token
+                },
+                body: JSON.stringify({
+                    bookingId: bookingId,
+                    amount: amount
+                })
+            });
+
+            const data = await res.json();
+            const payment = data.data || data.response;
+
+            if ((res.status === 200 || res.status === 201) && payment && payment.status === "SUCCESS") {
+                showToast("Payment processed successfully!", "success");
+                checkoutCard.style.display = "none";
+                successCard.style.display = "block";
+
+                receiptDetails.innerHTML = `
+                    <div><strong>Payment ID:</strong> ${payment._id}</div>
+                    <div><strong>Booking ID:</strong> ${bookingId}</div>
+                    <div><strong>Amount Paid:</strong> ₹${amount}</div>
+                    <div><strong>Status:</strong> <span style="color:#10b981; font-weight:700;">SUCCESS</span></div>
+                    <div style="margin-top:0.4rem; color:var(--accent-gold); font-size:0.85rem;">
+                        ✉️ An email confirmation receipt has been sent to your registered email address!
+                    </div>
+                `;
+            } else {
+                showToast(data.err || data.message || "Payment failed", "error");
+                payBtn.disabled = false;
+                payBtn.textContent = `Pay ₹${amount} Now`;
+            }
+        } catch (err) {
+            showToast("Network error during payment processing", "error");
+            payBtn.disabled = false;
+            payBtn.textContent = `Pay ₹${amount} Now`;
+        }
+    });
+});
+</script>
+
+<%- include('partials/footer') %>

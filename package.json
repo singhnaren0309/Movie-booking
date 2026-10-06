@@ -1,0 +1,22 @@
+{
+  "name": "mba_microservices",
+  "version": "1.0.0",
+  "description": "[![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg?style=flat-square&logo=node.js)](https://nodejs.org/) [![Express.js](https://img.shields.io/badge/Express-v5.2-lightgrey.svg?style=flat-square&logo=express)](https://expressjs.com/) [![MongoDB](https://img.shields.io/badge/Database-MongoDB%20%2F%20Mongoose-brightgreen.svg?style=flat-square&logo=mongodb)](https://www.mongodb.com/) [![JWT](https://img.shields.io/badge/Auth-JWT%20%26%20Bcrypt-orange.svg?style=flat-square&logo=jsonwebtokens)](https://jwt.io/) [![Architecture](https://img.shields.io/badge/Architecture-Microservices-blue.svg?style=flat-square)](https://microservices.io/)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/singhnaren0309/Movie-booking.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/singhnaren0309/Movie-booking/issues"
+  },
+  "homepage": "https://github.com/singhnaren0309/Movie-booking#readme",
+  "dependencies": {
+    "redis": "^6.3.0"
+  }
+}

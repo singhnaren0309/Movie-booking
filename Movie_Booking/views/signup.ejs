@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Join CineBook to reserve movie tickets instantly</p>
+
+        <form id="signup-form">
+            <div class="form-group">
+                <label class="form-label" for="name">Full Name</label>
+                <input class="form-input" type="text" id="name" required placeholder="John Doe" autocomplete="name">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input class="form-input" type="email" id="email" required placeholder="you@example.com" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password" required placeholder="••••••••" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+                Create Account
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+            Already have an account? <a href="/signin" style="color: var(--accent); font-weight: 600;">Sign in</a>
+        </p>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

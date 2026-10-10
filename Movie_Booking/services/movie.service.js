@@ -1,4 +1,5 @@
 const Movie=require("../models/movie.model")
+const {pipeline}=require("@huggingface/transformers");
 
 /**
  * 
@@ -12,6 +13,15 @@ const Movie=require("../models/movie.model")
 
 const createMovie=async (data)=>{
     try{
+        const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+
+        const textToEmbed = `${data.name}. ${data.description}`;
+        const embedding = await extractor(textToEmbed, {
+            pooling: 'mean',    // "mean" or "cls" (or true for default)
+            normalize: true
+        });
+        
+        data.vector_embedding = Array.from(embedding.data);
         const movie=await Movie.create(data);
         return movie;
 }
@@ -99,11 +109,47 @@ const fetchMovies=async(filter)=>{
     }
     return movies;
 }
-
+const semanticSearchMovies=async(query)=>{
+    try {
+        const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        
+        const embedding = await extractor(query, {
+            pooling: 'mean',
+            normalize: true
+        });
+        const queryVector = Array.from(embedding.data);
+        const results = await Movie.aggregate([
+            {
+                $vectorSearch: {
+                    index: "vector",
+                    queryVector: queryVector,
+                    path: "vector_embedding",
+                    numCandidates: 50, 
+                    limit: 2, 
+                    similarity: "cosine" 
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    description: 1,
+                    release_date: 1,
+                    score: { $meta: "vectorSearchScore" }
+                }
+            }
+        ]);
+        return results;
+    } catch (error) {
+        console.error("Error in semantic search:", error);
+        throw error;
+    }
+}
 module.exports={
     getMovie,
     createMovie,
     deleteMovie,
     updateMovie,
-    fetchMovies
+    fetchMovies,
+    semanticSearchMovies
 }

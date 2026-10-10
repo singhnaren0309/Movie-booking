@@ -19,5 +19,6 @@ const routes=(app)=>{
     //get all movies route admin customer or client can access
 
     app.get("/mba/api/v1/movies", cacheMovies, movieController.getMovies)
+    app.post("/mba/api/v1/movies/semantic-search",movieController.searchMovies)
 }
 module.exports=routes

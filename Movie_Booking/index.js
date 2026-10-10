@@ -11,21 +11,17 @@ const userRoutes=require("./routes/user.routes")
 const bookingRoutes=require("./routes/booking.routes")
 const showRoutes=require("./routes/show.routes")
 const paymentRoutes=require("./routes/payments.routes")
-const viewRoutes=require("./routes/view.routes")
 
 dotenv.config();
 const app = express();//express app object
 
-// View engine setup (EJS)
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+// Static directory setup (if needed, otherwise can remove)
 app.use(express.static(path.join(__dirname, "public")));
 
 //configuring body parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-viewRoutes(app);
 movieRoutes(app);
 authRoutes(app);
 theatreRoutes(app)
@@ -53,13 +49,13 @@ if(process.env.NODE_ENV==="production"){
     app.listen(3000, async () => {
         console.log("Server is running on port 3000");
 
-       try{ await mongoose.connect(process.env.DB_URI);
+       try{ await mongoose.connect(process.env.DB_URI, { dbName: process.env.DB_NAME || 'mba_db' });
        console.log("Connected to MongoDB");
 
        }
        catch(error){
         console.log(error);
-       } 
+       }  
     }); 
 }
 

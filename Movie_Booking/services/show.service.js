@@ -59,7 +59,7 @@ const getShows=async(data)=>{
         if(data.theatreId){
             filter.theatreId=data.theatreId;
         }
-        const response=await Show.find(filter);
+        const response=await Show.find(filter).populate('theatreId', 'name');
         if(!response){
             throw{
                 err:"Shows not found",

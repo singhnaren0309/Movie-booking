@@ -7,7 +7,7 @@ const authMiddlewares=require("../middlewares/auth.middlewares")
  */
 const routes=(app)=>{
     //create theatre route
-    app.post("/mba/api/v1/theatres",authMiddlewares.isAuthenticated,authMiddlewares.isClient,theatreMiddleware.validateTheatreCreateReq,theatreController.create);
+    app.post("/mba/api/v1/theatres",authMiddlewares.isAuthenticated,authMiddlewares.isAdminOrClient,theatreMiddleware.validateTheatreCreateReq,theatreController.create);
 
     //delete theatre route
     app.delete("/mba/api/v1/theatres/:id",authMiddlewares.isAuthenticated,authMiddlewares.isAdminOrClient,theatreController.destroy);

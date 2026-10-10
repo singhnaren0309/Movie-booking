@@ -25,7 +25,7 @@ The application is structured into two autonomous, loosely coupled microservices
 ```mermaid
 flowchart TD
     subgraph Client["Client Tier"]
-        UI["Web Browser (EJS UI / REST Client)"]
+        UI["Web Browser (REST Client)"]
     end
 
     subgraph CoreService["Movie Booking Core Service (Port: 3000)"]
@@ -104,7 +104,7 @@ flowchart TD
 | **Database & ODM** | MongoDB, Mongoose (v9.x) |
 | **Caching & Queues**| Redis (v6.x Client) |
 | **Authentication** | JSON Web Tokens (`jsonwebtoken`), `bcrypt` |
-| **Templating / UI** | EJS (Embedded JavaScript), Vanilla CSS |
+| **Frontend / UI** | Vanilla CSS, Client-side scripts |
 | **Message Broker** | Redis (`lPush`, `brPop`) |
 | **Email Service** | `nodemailer` (SMTP) |
 | **Dev Tools** | `nodemon`, `dotenv` |

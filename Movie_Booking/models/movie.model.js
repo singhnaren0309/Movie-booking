@@ -37,7 +37,11 @@ const movieSchema=new mongoose.Schema({
         type:String,
         default: "Released",
     },
-    
+    vector_embedding:{
+        type:[Number],
+        index:"vector",
+        dimensions:384
+    }
 },{
 timestamps:true
 })

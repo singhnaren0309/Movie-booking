@@ -109,11 +109,33 @@ const getMovies=async(req,res)=>{
         return res.status(500).json(errorResponseBody);
     }
 }
+const searchMovies=async(req,res)=>{
+    try{
+        const searchString = req.body.name;
+        const response=await Services.semanticSearchMovies(searchString);
+        if(response.err){
+           errorResponseBody.err=response.err;
+           return res.status(response.code).json(errorResponseBody); 
+        }
+        successResponseBody.data=response;
+        successResponseBody.message="Movies fetched successfully";
+        
+        // Save to cache for 1 hour
+        await redisClient.setEx('movies_catalog', 3600, JSON.stringify(response));
+
+        return res.status(200).json(successResponseBody);
+    }catch(err){
+        errorResponseBody.err=err;
+        return res.status(500).json(errorResponseBody);
+    }
+
+}
 
 module.exports={
     createMovie,
     deleteMovie,
     getMovie,
     updateMovie,
-    getMovies
+    getMovies,
+    searchMovies
 }

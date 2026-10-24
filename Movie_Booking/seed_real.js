@@ -17,16 +17,33 @@ async function seed() {
         await Theatre.deleteMany({});
         await Show.deleteMany({});
         
-        let adminUser = await User.findOne({ email: 'admin@admin.com' });
-        if (!adminUser) {
-            adminUser = new User({
-                name: 'Admin',
-                email: 'admin@admin.com',
-                password: 'admin@123',
-                userRole: 'ADMIN',
-                userStatus: 'APPROVED'
-            });
-            await adminUser.save();
+        const usersToSeed = [
+            { name: 'Admin User', email: 'admin@mba.com', role: 'ADMIN' },
+            { name: 'Admin', email: 'admin@admin.com', role: 'ADMIN' },
+            { name: 'Client Partner', email: 'client@mba.com', role: 'CLIENT' },
+            { name: 'Customer User', email: 'customer@mba.com', role: 'CUSTOMER' }
+        ];
+
+        console.log("Seeding users with password: mba@123...");
+        for (const u of usersToSeed) {
+            let existing = await User.findOne({ email: u.email });
+            if (!existing) {
+                existing = new User({
+                    name: u.name,
+                    email: u.email,
+                    password: 'mba@123',
+                    userRole: u.role,
+                    userStatus: 'APPROVED'
+                });
+                await existing.save();
+                console.log(`Created ${u.role} user: ${u.email}`);
+            } else {
+                existing.password = 'mba@123';
+                existing.userRole = u.role;
+                existing.userStatus = 'APPROVED';
+                await existing.save();
+                console.log(`Updated ${u.role} user: ${u.email}`);
+            }
         }
 
         const realMoviesList = [

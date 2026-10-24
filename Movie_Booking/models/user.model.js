@@ -4,8 +4,7 @@ const bcrypt=require("bcrypt");
 const userSchema=new mongoose.Schema({
     name:{
         type:String,
-        required:true,
-        unique:true
+        required:true
     },
     email:{
         type:String,
@@ -41,6 +40,7 @@ const userSchema=new mongoose.Schema({
  */
 
 userSchema.pre('save',async function(){
+    if (!this.isModified('password')) return;
     //a trigger to encrypt the plain password
     const hash=await bcrypt.hash(this.password,10);
     this.password=hash;

@@ -1,5 +1,5 @@
 const {STATUS_CODES}=require('../utils/constants');
-const {successResponseBody,errorResponseBody}=require('../utils/responsebody');
+const {errorResponseBody}=require('../utils/responsebody');
 
 const ObjectId=require('mongoose').Types.ObjectId;
 

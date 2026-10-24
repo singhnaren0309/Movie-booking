@@ -1,23 +1,48 @@
 # Dependencies
 node_modules/
-*/node_modules/
+**/node_modules/
+package-lock.json.bak
 
 # Environment variables & secrets
 .env
 .env.*
-*/.env
-*/.env.*
+*.env
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
 
 # Logs
+logs/
+**/logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-logs/
-*.log
+pnpm-debug.log*
+
+# Runtime / Temp data
+pids
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
 
 # OS & Editor files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+desktop.ini
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Build & Coverage artifacts
+dist/
+build/
+coverage/
+.nyc_output/

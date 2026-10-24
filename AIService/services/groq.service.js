@@ -11,14 +11,12 @@ async function getChatCompletion(messages){
         ...messages
     ];
     try{
- const response=await groq.chat.completions.create({
-
-  "model": "openai/gpt-oss-120b",
+  const response=await groq.chat.completions.create({
+   model: process.env.GROQ_MODEL || "qwen/qwen3.8-27b",
    messages: fullMessages,
    tools: tools,
    tool_choice: "auto",
    temperature: 0.2, 
- 
 });
     return response.choices[0].message;
     }

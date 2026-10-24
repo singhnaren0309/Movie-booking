@@ -1,10 +1,16 @@
 {
-  "name": "mba_microservices",
+  "name": "cinepass-microservices",
   "version": "1.0.0",
-  "description": "[![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg?style=flat-square&logo=node.js)](https://nodejs.org/) [![Express.js](https://img.shields.io/badge/Express-v5.2-lightgrey.svg?style=flat-square&logo=express)](https://expressjs.com/) [![MongoDB](https://img.shields.io/badge/Database-MongoDB%20%2F%20Mongoose-brightgreen.svg?style=flat-square&logo=mongodb)](https://www.mongodb.com/) [![JWT](https://img.shields.io/badge/Auth-JWT%20%26%20Bcrypt-orange.svg?style=flat-square&logo=jsonwebtokens)](https://jwt.io/) [![Architecture](https://img.shields.io/badge/Architecture-Microservices-blue.svg?style=flat-square)](https://microservices.io/)",
-  "main": "index.js",
+  "description": "Distributed AI-Powered Movie Ticketing Platform with Kafka, Redis locks, Vector Search, and Groq Agentic AI",
+  "main": "Movie_Booking/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "npm --prefix Movie_Booking install && npm --prefix NotificationService install && npm --prefix AIService install",
+    "start:booking": "npm --prefix Movie_Booking start",
+    "start:notification": "npm --prefix NotificationService start",
+    "start:ai": "node AIService/server.js",
+    "dev:booking": "npm --prefix Movie_Booking run dev",
+    "dev:notification": "npm --prefix NotificationService run dev",
+    "dev:ai": "npm --prefix AIService run dev"
   },
   "repository": {
     "type": "git",

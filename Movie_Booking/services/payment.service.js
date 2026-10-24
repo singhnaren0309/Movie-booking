@@ -3,9 +3,11 @@ const Booking = require("../models/booking.model");
 const User = require("../models/user.model");
 const Show=require('../models/show.model');
 const { STATUS_CODES, BOOKING_STATUS, PAYMENT_STATUS, USER_ROLE } = require("../utils/constants");
+const redisClient = require("../utils/redisClient");
 
 const createPayment = async (data) => {
     try {
+        // 1. Fetch booking details
         const booking = await Booking.findById(data.bookingId);
         if (!booking) {
             throw {
@@ -13,8 +15,8 @@ const createPayment = async (data) => {
                 code: STATUS_CODES.NOT_FOUND
             };
         }
-        const show = await Show.findOne({movieId:booking.movieId,timing:booking.timing,theatreId:booking.theatreId});
 
+        // 2. Guard against duplicate payments
         if (booking.status === BOOKING_STATUS.successfull) {
             throw {
                 err: "Booking is already paid and completed",
@@ -29,69 +31,107 @@ const createPayment = async (data) => {
             };
         }
 
-        let bookingTime = booking.createdAt.getTime();
-        let currentTime = Date.now();
+        const showIdentifier = `${booking.movieId}_${booking.theatreId}_${booking.timing}`;
 
-        let minutes = Math.floor(((currentTime - bookingTime) / 1000) / 60);
-        if (minutes > 5) {
+        // 3. Check if the 10-minute hold window has expired
+        if (Date.now() > new Date(booking.expiresAt).getTime()) {
             booking.status = BOOKING_STATUS.cancelled;
             await booking.save();
+
+            // Release any remaining Redis holds
+            for (const seat of (booking.seats || [])) {
+                await redisClient.del(`seat:${showIdentifier}:${seat}`);
+            }
+
             throw {
-                err: "Booking has expired, please create a new booking",
+                err: "Booking hold expired (10-minute limit exceeded). Please select seats again.",
                 code: STATUS_CODES.BAD_REQUEST
             };
         }
 
+        // 4. Validate payment amount against booking total cost
+        if (data.amount !== booking.totalCost) {
+            await Payment.create({
+                bookingId: data.bookingId,
+                amount: data.amount,
+                status: PAYMENT_STATUS.failed
+            });
+
+            booking.status = BOOKING_STATUS.cancelled;
+            await booking.save();
+
+            // Release Redis holds
+            for (const seat of (booking.seats || [])) {
+                await redisClient.del(`seat:${showIdentifier}:${seat}`);
+            }
+
+            throw {
+                err: `Payment amount (${data.amount}) does not match booking total cost (${booking.totalCost})`,
+                code: STATUS_CODES.BAD_REQUEST
+            };
+        }
+
+        // 5. Create payment record with PENDING status
         const payment = await Payment.create({
             bookingId: data.bookingId,
-            amount: data.amount
+            amount: data.amount,
+            status: PAYMENT_STATUS.pending
         });
 
-        if (payment.amount !== booking.totalCost) {
-            payment.status = PAYMENT_STATUS.failed;
-            booking.status = BOOKING_STATUS.cancelled;
-            await booking.save();
-            await payment.save();
-            throw {
-                err: `Payment amount (${payment.amount}) does not match booking total cost (${booking.totalCost})`,
-                code: STATUS_CODES.BAD_REQUEST
-            };
-        }
-
-        // Atomic conditional update to prevent race conditions and overbooking
+        // 6. Atomic check & commit: add seats to occupiedSeats if none are already occupied
         const updatedShow = await Show.findOneAndUpdate(
             {
                 movieId: booking.movieId,
                 theatreId: booking.theatreId,
                 timing: booking.timing,
-                noOfSeats: { $gte: booking.noOfSeats }
+                occupiedSeats: { $nin: booking.seats } // Guard: none of these seats can be occupied
             },
             {
-                $inc: { noOfSeats: -booking.noOfSeats }
+                $push: {
+                    occupiedSeats: { $each: booking.seats }
+                },
+                $inc: {
+                    noOfSeats: -booking.noOfSeats
+                }
             },
             { new: true }
         );
 
+        // 7. If show was not updated, another user already booked one of the seats
         if (!updatedShow) {
             payment.status = PAYMENT_STATUS.failed;
             booking.status = BOOKING_STATUS.cancelled;
-            await payment.save();
             await booking.save();
+            await payment.save();
+
+            for (const seat of (booking.seats || [])) {
+                await redisClient.del(`seat:${showIdentifier}:${seat}`);
+            }
+
             throw {
-                err: "Not enough seats available. The remaining seats were just booked by another user.",
+                err: "Booking failed: One or more selected seats were already booked by another user.",
                 code: STATUS_CODES.BAD_REQUEST
             };
         }
 
+        // 8. Success: Update statuses to completed
         payment.status = PAYMENT_STATUS.success;
         booking.status = BOOKING_STATUS.successfull;
-        await payment.save();
         await booking.save();
+        await payment.save();
+
+        // 9. Remove temporary Redis holds now that seats are permanently stored in MongoDB
+        for (const seat of (booking.seats || [])) {
+            await redisClient.del(`seat:${showIdentifier}:${seat}`);
+        }
+
         return payment;
+
     } catch (error) {
         throw error;
     }
 };
+
 
 const getPaymentDetailsById = async (id) => {
     try {

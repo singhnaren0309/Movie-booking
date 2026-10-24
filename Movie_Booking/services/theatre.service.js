@@ -1,5 +1,4 @@
 const Theatre=require("../models/theatre.model")
-const Movie=require("../models/movie.model")
 const {STATUS_CODES}=require('../utils/constants')
 /**
  * 

@@ -64,13 +64,9 @@ const validateMovieCreateReq=async(req,res,next)=>{
             error:"Release_status is required"
         })
     }
-    next()
-}
-
-const validateMovieUpdateReq=async(req,res,next)=>{
-    
-}
+    next();
+};
 
 module.exports={
     validateMovieCreateReq
-}
+};

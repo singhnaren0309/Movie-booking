@@ -22,6 +22,10 @@ const bookingSchema=new mongoose.Schema({
     type:String,
     required:true
    },
+   seats:{
+    type:[String],
+    required:true
+   },
    noOfSeats:{
     type:Number,
     required:true
@@ -37,10 +41,19 @@ const bookingSchema=new mongoose.Schema({
         message:"Status can only be CANCELLED, SUCCESSFULL or PROCESSING"
     },
     default:BOOKING_STATUS.processing
+   },
+   expiresAt:{
+    type:Date,
+    default:()=>new Date(Date.now()+10*60*1000) // 10 minutes
    }
 },{     
     timestamps:true
 })
+
+// Compound indexes for user booking history and show lookups
+bookingSchema.index({ userId: 1, createdAt: -1 });
+bookingSchema.index({ movieId: 1, theatreId: 1, timing: 1 });
+bookingSchema.index({ status: 1 });
 
 const Booking=mongoose.model("Booking",bookingSchema);
 module.exports=Booking

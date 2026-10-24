@@ -1,16 +1,50 @@
 const paymentsService = require("../services/payment.service");
+const Booking = require("../models/booking.model");
 const {successResponseBody,errorResponseBody}=require("../utils/responsebody");
-const{STATUS_CODES, BOOKING_STATUS}=require("../utils/constants");
-const sendEmail = require("../services/email.service");
+const{STATUS_CODES}=require("../utils/constants");
+const publishBookingEvent = require("../services/email.service");
+const { generateBookingEmailHtml } = require("../../NotificationService/utils/emailTemplates");
 
 const createPayment=async(req,res)=>{
     try{
         const response=await paymentsService.createPayment(req.body);
-        sendEmail(
-            "Payment Successful",
-            req.user.email,
-            `Hello ${req.user.name || 'Customer'},\nYour payment of Rs. ${response.amount} for booking ID ${response.bookingId} was processed successfully!\nBooking Status: SUCCESSFUL`
-        );
+        
+        // Fetch booking with populated movie and theatre details for the email
+        const booking = await Booking.findById(response.bookingId)
+            .populate('movieId', 'name')
+            .populate('theatreId', 'name');
+
+        const movieName = booking?.movieId?.name || "Movie";
+        const theatreName = booking?.theatreId?.name || "Cinema";
+        const customerName = req.user?.name || "Customer";
+
+        // Generate HTML content for the email
+        const htmlContent = generateBookingEmailHtml({
+            customerName,
+            movieName,
+            theatreName,
+            timing: booking?.timing || "14:00",
+            seats: booking?.seats || [],
+            amount: response.amount,
+            bookingId: response.bookingId
+        });
+
+        await publishBookingEvent(
+    "BOOKING_PAYMENT_SUCCESS",
+    {
+        bookingId: response.bookingId.toString(),
+        userId: req.user._id.toString(),
+        movieName,
+        theatreName,
+        timing: booking.timing,
+        seats: booking.seats,
+        amount: response.amount,
+        email: req.user.email,
+        customerName,
+        htmlContent
+    }
+);
+
         successResponseBody.data=response;
         successResponseBody.message="Payment created successfully";
         return res.status(STATUS_CODES.SUCCESS).json(successResponseBody);

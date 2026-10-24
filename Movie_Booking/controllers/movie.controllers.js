@@ -1,7 +1,18 @@
-const Movie=require("../models/movie.model");
 const Services=require("../services/movie.service");
 const {successResponseBody,errorResponseBody}=require("../utils/responsebody");
 const redisClient = require('../utils/redisClient');
+
+const invalidateMovieCache = async () => {
+    try {
+        const keys = await redisClient.keys('movies_catalog:*');
+        if (keys && keys.length > 0) {
+            await redisClient.del(keys);
+        }
+        await redisClient.del('movies_catalog');
+    } catch (err) {
+        console.error("Cache invalidation error:", err);
+    }
+};
 
 /**
  * 
@@ -23,7 +34,7 @@ const createMovie=async (req,res)=>{
         successResponseBody.message="Movie created successfully";
         
         // Invalidate cache
-        await redisClient.del('movies_catalog');
+        await invalidateMovieCache();
         
         return res.status(201).json(successResponseBody);
     }catch(err){
@@ -44,7 +55,7 @@ const deleteMovie=async(req,res)=>{
         successResponseBody.message="Successfully deleted the movie";
         
         // Invalidate cache
-        await redisClient.del('movies_catalog');
+        await invalidateMovieCache();
 
         return res.status(200).json(successResponseBody);
         
@@ -58,8 +69,8 @@ const getMovie=async(req,res)=>{
     try{
         const response=await Services.getMovie(req.params.id)
         if(response.err){
-           errorResponseBody.err=response.err;
-           return res.status(response.code).json(errorResponseBody); 
+            errorResponseBody.err=response.err;
+            return res.status(response.code).json(errorResponseBody); 
         }
         
         successResponseBody.data=response;
@@ -82,7 +93,7 @@ const updateMovie=async(req,res)=>{
         successResponseBody.message="Movie updated successfully";
         
         // Invalidate cache
-        await redisClient.del('movies_catalog');
+        await invalidateMovieCache();
 
         return res.status(200).json(successResponseBody);
     }catch(err){
@@ -100,8 +111,9 @@ const getMovies=async(req,res)=>{
         successResponseBody.data=response;
         successResponseBody.message="Movies fetched successfully";
         
-        // Save to cache for 1 hour
-        await redisClient.setEx('movies_catalog', 3600, JSON.stringify(response));
+        // Save to cache for 1 hour with unique key per query
+        const cacheKey = `movies_catalog:${req.originalUrl}`;
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(response));
 
         return res.status(200).json(successResponseBody);
     }catch(err){
@@ -109,27 +121,38 @@ const getMovies=async(req,res)=>{
         return res.status(500).json(errorResponseBody);
     }
 }
-const searchMovies=async(req,res)=>{
-    try{
-        const searchString = req.body.name;
-        const response=await Services.semanticSearchMovies(searchString);
-        if(response.err){
-           errorResponseBody.err=response.err;
-           return res.status(response.code).json(errorResponseBody); 
+const searchMovies = async (req, res) => {
+    try {
+        const searchString = req.body.name || '';
+        const searchKey = `movies_search:${searchString.toLowerCase().trim()}`;
+
+        // 1. Check Redis cache FIRST
+        const cachedResult = await redisClient.get(searchKey);
+        if (cachedResult) {
+            successResponseBody.data = JSON.parse(cachedResult);
+            successResponseBody.message = "Movies fetched successfully (cached)";
+            return res.status(200).json(successResponseBody);
         }
-        successResponseBody.data=response;
-        successResponseBody.message="Movies fetched successfully";
+
+        // 2. Only run the heavy embedding search on cache miss
+        const response = await Services.semanticSearchMovies(searchString);
+        if (response.err) {
+            errorResponseBody.err = response.err;
+            return res.status(response.code).json(errorResponseBody); 
+        }
+
+        successResponseBody.data = response;
+        successResponseBody.message = "Movies fetched successfully";
         
-        // Save to cache for 1 hour
-        await redisClient.setEx('movies_catalog', 3600, JSON.stringify(response));
+        // 3. Save result to cache for 30 minutes
+        await redisClient.setEx(searchKey, 1800, JSON.stringify(response));
 
         return res.status(200).json(successResponseBody);
-    }catch(err){
-        errorResponseBody.err=err;
+    } catch (err) {
+        errorResponseBody.err = err;
         return res.status(500).json(errorResponseBody);
     }
-
-}
+};
 
 module.exports={
     createMovie,

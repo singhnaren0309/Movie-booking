@@ -7,6 +7,18 @@ const aiRoutes = require("./routes/ai.routes");
 dotenv.config();
 
 const app = express();
+
+// Enable CORS for direct microservice access
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-access-token");
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(bodyParser.json());
 
 // Initialize routes

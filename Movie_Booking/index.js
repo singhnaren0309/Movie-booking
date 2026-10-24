@@ -1,63 +1,75 @@
-const express = require("express");
-const mongoose= require("mongoose");
 const dotenv = require("dotenv");
-const bodyParser = require("body-parser");
-const path = require("path");
-
-const movieRoutes=require("./routes/movie.routes")
-const theatreRoutes=require("./routes/theatre.routes")
-const authRoutes=require("./routes/auth.routes")
-const userRoutes=require("./routes/user.routes")
-const bookingRoutes=require("./routes/booking.routes")
-const showRoutes=require("./routes/show.routes")
-const paymentRoutes=require("./routes/payments.routes")
-
 dotenv.config();
-const app = express();//express app object
 
-// Static directory setup (if needed, otherwise can remove)
-app.use(express.static(path.join(__dirname, "public")));
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 
-//configuring body parser
+const movieRoutes = require("./routes/movie.routes");
+const theatreRoutes = require("./routes/theatre.routes");
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes");
+const bookingRoutes = require("./routes/booking.routes");
+const showRoutes = require("./routes/show.routes");
+const paymentRoutes = require("./routes/payments.routes");
+const { responseContextMiddleware } = require("./utils/responsebody");
+
+// kafka client
+const { connectProducer } = require('./utils/kafkaClient');
+
+const app = express(); // express app object
+
+// Enable CORS for direct microservice access
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-access-token");
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
+// Per-request isolated response context
+app.use(responseContextMiddleware);
+
+
+// Configuring body parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Register routes
 movieRoutes(app);
 authRoutes(app);
-theatreRoutes(app)
-userRoutes(app)
+theatreRoutes(app);
+userRoutes(app);
 bookingRoutes(app);
 showRoutes(app);
 paymentRoutes(app);
 
 
 
-// Server listen
-if(process.env.NODE_ENV==="production"){
-    app.listen(3000, async () => {
-        console.log("Server is running on port 3000");
+const PORT = process.env.PORT || 3000;
+const DB_URI = process.env.NODE_ENV === "production" ? process.env.PROD_DB_URL : process.env.DB_URI;
 
-       try{ await mongoose.connect(process.env.PROD_DB_URL);
-       console.log("Connected to MongoDBAtlas");
+const startServer = async () => {
+    try {
+        await mongoose.connect(DB_URI, { dbName: process.env.DB_NAME || 'mba_db' });
+        console.log(`Connected to MongoDB (${process.env.NODE_ENV === "production" ? "Atlas" : "Local"})`);
 
-       }
-       catch(error){
-        console.log(error);
-       } 
-    }); 
-}else{
-    app.listen(3000, async () => {
-        console.log("Server is running on port 3000");
+        await connectProducer();
+        console.log("Connected to Kafka Producer");
 
-       try{ await mongoose.connect(process.env.DB_URI, { dbName: process.env.DB_NAME || 'mba_db' });
-       console.log("Connected to MongoDB");
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
 
-       }
-       catch(error){
-        console.log(error);
-       }  
-    }); 
-}
+startServer();
 
 /*
 MVC=> Models view controllers

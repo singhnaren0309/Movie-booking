@@ -109,9 +109,26 @@ const fetchMovies=async(filter)=>{
     }
     return movies;
 }
+
+const cosineSimilarity=(vecA,vecB)=>{
+    let dotProduct=0;
+    for(let i=0;i<vecA.length;i++){
+        dotProduct+=vecA[i]*vecB[i];
+    }
+    let magnitudeA=0;
+    for(let i=0;i<vecA.length;i++){
+        magnitudeA+=vecA[i]*vecA[i];
+    }
+    let magnitudeB=0;
+    for(let i=0;i<vecB.length;i++){
+        magnitudeB+=vecB[i]*vecB[i];
+    }
+    return dotProduct/(Math.sqrt(magnitudeA)*Math.sqrt(magnitudeB));
+}
+
 const semanticSearchMovies=async(query)=>{
     try {
-        const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        const extractor = await pipeline('feature-extraction', 'Xenova/bge-large-en-v1.5');
         
         const embedding = await extractor(query, {
             pooling: 'mean',

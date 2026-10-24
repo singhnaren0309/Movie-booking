@@ -1,7 +1,7 @@
 const jwt=require("jsonwebtoken")
 const {STATUS_CODES}=require("../utils/constants")
 
-const{successResponseBody,errorResponseBody}=require("../utils/responsebody")
+const {errorResponseBody}=require("../utils/responsebody")
 const UserService=require("../services/user.service")
 
 const validateSignUpRequest=async(req,res,next)=>{

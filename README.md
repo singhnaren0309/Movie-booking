@@ -230,14 +230,6 @@ cd Movie_Booking
 node seed_real.js
 ```
 
-**Pre-configured Seed Personas (All passwords: `mba@123`):**
-| Persona | Email | Role |
-| :--- | :--- | :--- |
-| **Sarthak** | `sarthaksuryawanshi8788@gmail.com` | `CUSTOMER` |
-| **Narender** | `singhnarender2810@gmail.com` | `CUSTOMER` |
-| **Admin** | `admin@mba.com` | `ADMIN` |
-| **Client** | `client@mba.com` | `CLIENT` |
-
 ---
 
 ### 4. Running the Microservices

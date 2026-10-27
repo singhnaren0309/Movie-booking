@@ -7,7 +7,7 @@ const HOLD_TTL_SECONDS=600;
 
 const createBooking=async(data)=>{
 
-    const requestedSeats=data.seats||[];
+    const requestedSeats = (data.seats || []).slice().sort();
     if(!requestedSeats.length){
         throw {err:"No seats selected",code:STATUS_CODES.BAD_REQUEST};
     }

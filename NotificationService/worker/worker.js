@@ -2,6 +2,7 @@ const { consumer, producer } = require('../utils/kafkaClient');
 const { sendMail } = require('../services/email.service');
 const { generateBookingEmailHtml } = require('../utils/emailTemplates');
 
+
 const MAX_RETRIES = 3;
 
 const runNotificationConsumer = async () => {

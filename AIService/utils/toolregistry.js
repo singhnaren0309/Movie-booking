@@ -4,7 +4,8 @@ const axios = require("axios");
 const MOVIE_BOOKING_URL = process.env.MOVIE_BOOKING_URL || "http://localhost:3000";
 
 // Separate helper to run tools cleanly
-async function executeTool(functionName, args, req) {
+async function executeTool(functionName, args = {}, req = {}) {
+    args = args || {};
     if (functionName === "get_currently_playing_movies") {
         try {
             const response = await axios.get(`${MOVIE_BOOKING_URL}/mba/api/v1/movies`);
@@ -55,7 +56,8 @@ async function executeTool(functionName, args, req) {
 
     if (functionName === "initiate_booking") {
         // Forward auth token from the client request
-        const token = req.headers["x-access-token"] || req.headers["authorization"]?.replace(/^Bearer\s+/i, "");
+        const headers = req?.headers || {};
+        const token = headers["x-access-token"] || headers["authorization"]?.replace(/^Bearer\s+/i, "");
         if (!token) {
             return JSON.stringify({
                 error: "User is not logged in. Please provide an access token to complete the booking.",
